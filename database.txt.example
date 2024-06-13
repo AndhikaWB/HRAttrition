@@ -1,0 +1,5 @@
+If using URI (e.g. SQLAlchemy, Metabase):
+postgresql://[USERNAME]:[PASSWORD]@[SERVER]:[PORT]/[DATABASE]
+
+If using JDBC (e.g. Looker):
+jdbc:postgresql://[SERVER]:[PORT]/[DATABASE]?user=[USERNAME]&password=[PASSWORD]

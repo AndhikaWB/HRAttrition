@@ -1,0 +1,6 @@
+/.venv
+/database.txt
+/dashboard/*
+!/dashboard/*.md
+!/dashboard/*.sh
+!/dashboard/*.7z
