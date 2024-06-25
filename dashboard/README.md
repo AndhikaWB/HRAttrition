@@ -159,6 +159,8 @@ Berdasarkan konklusi di atas dan analisis lebih lanjut, maka sebaiknya:
 3. Memantau manager yang memiliki banyak bawahan dengan attrition rate tinggi dan/atau menempatkan karyawan baru ke manager yang lebih komunikatif
     - 20% karyawan akan attrition dalam jangka waktu 1 tahun bila tidak cocok dengan manager saat ini, meskipun telah bekerja lebih dari 1 tahun di perusahaan
         - Angka ini naik ke 30% bila merupakan karyawan baru (belum 1 tahun bekerja di perusahaan)
+        - Mereview tingkat kepuasan karyawan setiap 1 tahun bekerja (misal apakah mereka mempunyai ambisi tidak tercapai dengan kondisi saat ini?), dan mengakomodasinya bila memungkinkan
+            - Catatan: ambisi tidak selalu dalam bentuk uang, namun dapat juga dalam bentuk eksplorasi skill baru yang tidak ada dalam kultur perusahaan saat ini
     - Memberikan motivasi dan insentif terhadap manager yang memiliki attrition/turnover rate rendah (jurnal terkait [^6]). Bila secara tidak langsung misalnya dengan kompetisi "manager of the month", dsb
     - Melakukan post interview/memantau beberapa saat (0-3 bulan) setelah karyawan attrition
         - Apakah karyawan yang keluar sudah bekerja kembali (di perusahaan lain)? Bila belum mendapat pekerjaan maka ada faktor khusus (manager, dsb) yang menyebabkan karyawan tidak tahan/keluar sebelum memiliki backup pekerjaan lain 
