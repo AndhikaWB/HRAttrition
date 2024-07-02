@@ -14,14 +14,14 @@
 
 ## Dashboard
 
-The dashboard is split into 4 separate tabs for easier analysis, which can be seen below. You can also see the conclusions and recommended actions [here](dashboard/README.md).
+The dashboard is split into 4 separate tabs for easier analysis, which can be seen below. You can also see the conclusions and recommended actions [here](dashboard/README.md), or the [presentation file](misc/HR%20Attrition.pdf) directly.
 
 <details>
     <summary>Show screenshots</summary>
     <p align="center">
-        <img style="border: 1px solid white;" src="img/dashboard_1.png"/>
-        <img style="border: 1px solid white;" src="img/dashboard_2.png"/>
-        <img style="border: 1px solid white;" src="img/dashboard_3.png"/>
-        <img style="border: 1px solid white;" src="img/dashboard_4.png"/>
+        <img style="border: 1px solid white;" src="img/metabase_1.png"/>
+        <img style="border: 1px solid white;" src="img/metabase_2.png"/>
+        <img style="border: 1px solid white;" src="img/metabase_3.png"/>
+        <img style="border: 1px solid white;" src="img/metabase_4.png"/>
     </p>
 </details>
