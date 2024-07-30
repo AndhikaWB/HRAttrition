@@ -1,38 +1,29 @@
 import os
 import pandas as pd
 import keras
+import joblib
 
-from sklearn.preprocessing import (
-    TargetEncoder,
-    MinMaxScaler
-)
+from sklearn.preprocessing import MinMaxScaler
 
 # CSV used to predict employee attrition (no attrition column)
 # Must contain employee data such as age, income, etc to predict
-CSV_PRED_PATH = 'data/employee_data.csv'
-
-# CSV for target encoding (must have fully filled attrition column!)
-#
-# Values should be similar between base and pred CSV
-# e.g. In order to recognize HR department in pred CSV,
-# the HR department must also exist on base CSV
-#
-# The easiest way is to separate CSV by period (month, year, etc)
-# e.g. base CSV = last month data, pred CSV = this month data (to predict)
-#
-# TODO: Pickle the encoder to remove base CSV requirement
-CSV_BASE_PATH = 'data/employee_data_fixed.csv'
-
-# Model used for predicting attrition
-MODEL_PATH = 'model/model_ensemble.keras'
-
+CSV_INPUT = 'data/employee_data.csv'
 # Where to save output prediction from the model?
 # Output will be employee id and its attrition prediction
-MODEL_PRED_CSV = 'model/model_output.csv'
+MODEL_OUTPUT = 'model/model_output.csv'
 
+# Data scaler object (to avoid unnecessary reinitialization)
+SCALER_OBJ = MinMaxScaler()
+# Target encoder that is already fitted before
+ENCODER_OBJ = joblib.load('model/encoder.lz4')
+# The neural network model
+MODEL_OBJ = keras.models.load_model('model/model_ensemble.keras')
 
-def data_convert(df: pd.DataFrame) -> pd.DataFrame:
-    return df.replace(
+def preprocess(df: pd.DataFrame) -> pd.DataFrame:
+    # ===============
+    # Convert data types
+
+    df = df.replace(
         {
             'Attrition': {
                 'Yes': 1,
@@ -54,16 +45,8 @@ def data_convert(df: pd.DataFrame) -> pd.DataFrame:
         }
     )
 
-def preprocess(df: pd.DataFrame) -> pd.DataFrame:
-    # ===============
-    # Convert data types
-
-    df = data_convert(df)
-
     cat_col = ['Department', 'EducationField', 'Gender', 'JobRole', 'MaritalStatus']
-
-    for col in cat_col:
-        df[col + 'N'] = pd.factorize(df[col])[0]
+    for col in cat_col: df[col + 'N'] = pd.factorize(df[col])[0]
 
     # ===============
     # Drop unimportant columns
@@ -87,8 +70,8 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
         df.loc[ df[c] > iqr3, c ] = int(iqr3)
 
     # ===============
-    # Bucketize continuous values
-        
+    # Bin/bucketize continuous values
+
     bin_arg = {'right': True, 'include_lowest': True}
 
     temp = [18] + [i * 5 + 20 for i in range(9)] # 18, 20, 25, 30, ..., 60
@@ -131,17 +114,9 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     ]
 
     enc_col = bin_col + cat_col + other_col
-    cat_encoder = TargetEncoder()
-    
-    temp = pd.read_csv(CSV_BASE_PATH)
-    temp = data_convert(temp)
-
-    for col in enc_col:
-        if temp[col].dtype != df[col].dtype:
-            temp[col] = temp[col].astype(df[col].dtype)
+    cat_encoder = ENCODER_OBJ
 
     new_col = [i + 'N' for i in enc_col]
-    cat_encoder.fit(temp[enc_col], temp['Attrition'])
     df[new_col] = cat_encoder.transform(df[enc_col])
 
     # ===============
@@ -152,27 +127,19 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
 
     # From Pearson correlation (r_regression)
     col = ['EmployeeId'] + [
-        'OverTimeN',
-        'JobRoleN',
-        'TotalWorkingYearsN',
-        'JobLevelN',
-        'MonthlyIncomeN',
-        'YearsAtCompanyN',
-        'AgeN',
-        'StockOptionLevelN',
-        'MaritalStatusN',
-        'YearsInCurrentRoleN',
-        'YearsWithCurrManagerN',
-        'BusinessTravelN',
-        'JobInvolvementN',
-        'EnvironmentSatisfactionN'
+        'TotalWorkingYearsN', 'OverTimeN', 'JobRoleN', 'MonthlyIncomeN', 'AgeN',
+        'JobLevelN', 'YearsAtCompanyN', 'StockOptionLevelN', 'MaritalStatusN',
+        'YearsInCurrentRoleN', 'YearsWithCurrManagerN', 'JobInvolvementN',
+        'BusinessTravelN', 'EnvironmentSatisfactionN', 'DistanceFromHomeN',
+        'JobSatisfactionN', 'WorkLifeBalanceN', 'EducationFieldN',
+        'TrainingTimesLastYearN'
     ] # + ['IsTest', 'Attrition']
 
     df = df[col]
 
     return df
 
-def predict(df: pd.DataFrame):
+def predict(df: pd.DataFrame, out_csv: bool = False):
     # ===============
     # Data scaling and dividing
 
@@ -180,37 +147,39 @@ def predict(df: pd.DataFrame):
     x_col = [i for i in col if i != 'Attrition']
     y_col = ['Attrition']
 
-    scaler = MinMaxScaler()
+    scaler = SCALER_OBJ
     df[x_col] = scaler.fit_transform(df[x_col])
 
     # ===============
     # Load model and predict
 
     x_test = df[x_col]
-    model_ensemble = keras.models.load_model(MODEL_PATH)
+    model_ensemble = MODEL_OBJ
     y_pred = model_ensemble.predict(x_test)
 
     df_pred = pd.DataFrame()
     df_pred['EmployeeId'] = df['EmployeeId']
-    df_pred['Prediction'] = y_pred * 100
+    df_pred['Confidence'] = y_pred * 100
 
-    df_pred.loc[df_pred['Prediction'] >= 60, 'IsAttrition'] = 'Most_Likely'
-    df_pred.loc[(df_pred['Prediction'] >= 40) & (df_pred['Prediction'] < 60), 'IsAttrition'] = 'With_Caution'
-    df_pred.loc[df_pred['Prediction'] < 40, 'IsAttrition'] = 'Less_Likely'
+    df_pred.loc[df_pred['Confidence'] >= 60, 'IsAttrition'] = 'Most_Likely'
+    df_pred.loc[(df_pred['Confidence'] >= 40) & (df_pred['Confidence'] < 60), 'IsAttrition'] = 'With_Caution'
+    df_pred.loc[df_pred['Confidence'] < 40, 'IsAttrition'] = 'Less_Likely'
 
-    df_pred = df_pred.sort_values('Prediction', ascending = False)
-    df_pred['Prediction'] = df_pred['Prediction'].astype('int')
+    df_pred = df_pred.sort_values('Confidence', ascending = False)
+    df_pred['Confidence'] = df_pred['Confidence'].astype('int')
 
-    df_pred.to_csv(MODEL_PRED_CSV, index = False)
+    if out_csv:
+        df_pred.to_csv(MODEL_OUTPUT, index = False)
+        print(f'\nHasil prediksi model disimpan ke: "{MODEL_OUTPUT}"')
+        print('PENTING! Prediksi tidak bersifat absolut dan tetap bisa salah')
 
-    print(f'\nHasil prediksi model disimpan ke: "{MODEL_PRED_CSV}"')
-    print('PENTING! Prediksi tidak bersifat absolut dan tetap bisa salah')
+    return df_pred.to_dict(orient = 'split', index = False)
 
 if __name__ == '__main__':
-    if not os.path.isfile(CSV_PRED_PATH):
-        print(f'File CSV tidak dapat ditemukan: "{CSV_PRED_PATH}"')
-        CSV_PRED_PATH = input('Masukkan lokasi file CSV secara manual: ').strip('\"').strip()
+    if not os.path.isfile(CSV_INPUT):
+        print(f'File CSV tidak dapat ditemukan: "{CSV_INPUT}"')
+        CSV_INPUT = input('Masukkan lokasi file CSV secara manual: ').strip('\"').strip()
     
-    df = pd.read_csv(CSV_PRED_PATH)
+    df = pd.read_csv(CSV_INPUT)
     df = preprocess(df)
-    predict(df)
+    predict(df, out_csv = True)
