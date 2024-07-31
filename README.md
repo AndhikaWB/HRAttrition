@@ -1,6 +1,7 @@
 # HR: Employee Attrition Analysis
 
 - Identify main factors of employee atrrition using Metabase/Tableau
+- Employee data contains 1470 rows (1058 for train, 412 for test)
 - Predict employee attrition likelihood using ensemble neural network (82% accuracy, 72% macro F1)
 
 ## Predict using CLI
@@ -10,10 +11,10 @@
 3. By default, the model look at `data/employee_data.csv` to predict attrition. If the file is not found, you can type and enter another path manually (or just drag the CSV file to the terminal app)
 4. Prediction output will be saved to `model/model_output.csv` (can be changed by editing `prediction.py`)
 
-## Predict using REST API
+## Predict using REST API Server
 
 1. Install all Python requirements (`pip install -r requirements.txt`)
-2. Run `uvicorn main:app --host 127.0.0.1 --port 8000` to start the backend server
+2. Run `uvicorn main:app --host 127.0.0.1 --port 8000` to start the backend server (`--host 0.0.0.0` if using Docker)
 3. Upload a CSV file to the server (e.g. via cURL):
 ``` sh
 curl -X POST 'http://127.0.0.1:8000/predict_file' \
@@ -21,7 +22,7 @@ curl -X POST 'http://127.0.0.1:8000/predict_file' \
   -H 'Content-Type: multipart/form-data' \
   -F 'file=@data/employee_data.csv'
 ```
-4. Or send it as json directly:
+4. Or send it as JSON data directly:
 ``` sh
 curl -X POST 'http://127.0.0.1:8000/predict' \
   -H 'accept: application/json' \
@@ -30,6 +31,14 @@ curl -X POST 'http://127.0.0.1:8000/predict' \
 ```
 
 Note: The FastAPI docs page is also accessible via `127.0.0.1:8000/docs`, you can make mock request and view request history there
+
+### Running Server on Docker
+
+1. Build the image using `docker build -t hr-attrition .` (on the same dir as `Dockerfile`)
+2. Run it as container using `docker run --name test -p 8000:8000 hr-attrition` (or use `-dp` for background/detached mode)
+3. To stop the container, press Ctrl + C or using `docker stop test`
+4. To run it again, use `docker start test` instead of `docker run ...` (to prevent creating duplicate container)
+5. Delete the container using `docker rm test` and the image using `docker rmi hr-attrition` if no longer needed
 
 ## Dashboard
 
