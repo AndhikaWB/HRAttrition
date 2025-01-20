@@ -4,6 +4,8 @@
 - Employee data contains 1470 rows (1058 for train, 412 for test)
 - Predict employee attrition likelihood using ensemble neural network (82% accuracy, 72% macro F1)
 
+**Note:** This repo is more focused on the backend (FastAPI) and presentation (PowerPoint). There is a similar one ([student dropout](https://github.com/AndhikaWB/StudentDropoutStreamlit)) that is more focused on the web app (Streamlit)
+
 ## Predict using CLI
 
 1. Install all Python requirements (`pip install -r requirements.txt`)
